@@ -1,4 +1,4 @@
-https://addons.mozilla.org/en-US/firefox/addon/send-image-to-anki/
+[![Firefox](https://img.shields.io/badge/Firefox-FF7139?style=for-the-badge&logo=Firefox-Browser&logoColor=white)](https://addons.mozilla.org/en-US/firefox/addon/send-image-to-anki/)
 
 This a small Firefox addon that let's you right click an image and directly add
 it to an [Anki](https://apps.ankiweb.net/) card.
