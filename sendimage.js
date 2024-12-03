@@ -41,6 +41,7 @@ async function sendToAnki(imageUrl) {
             {
               url: imageUrl,
               filename: "_send-image.jpg",
+              deleteExisting: false,
               fields: ["Image"],
             },
           ],
