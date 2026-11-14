@@ -1,3 +1,14 @@
+function makeFilename(url) {
+  let ext = "jpg";
+  try {
+    const m = new URL(url).pathname.match(/\.(jpe?g|png|gif|webp|avif|svg)$/i);
+    if (m) ext = m[1].toLowerCase();
+  } catch {}
+
+  const id = crypto.randomUUID().slice(0, 8);
+  return `send-image-${Date.now()}-${id}.${ext}`;
+}
+
 async function sendToAnki(imageUrl) {
   function invoke(action, version, params = {}) {
     return new Promise((resolve, reject) => {
@@ -40,7 +51,7 @@ async function sendToAnki(imageUrl) {
           picture: [
             {
               url: imageUrl,
-              filename: "_send-image.jpg",
+              filename: makeFilename(imageUrl),
               deleteExisting: false,
               fields: ["Image"],
             },
