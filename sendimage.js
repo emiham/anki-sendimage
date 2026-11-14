@@ -67,10 +67,42 @@ async function fetchAsBase64(url) {
   });
 }
 
-async function sendToAnki(imageUrl) {
-  const reviewer = await call("reviewer.get");
-  if (!reviewer.card) throw new Error("No card is currently being reviewed");
+async function selectCards(cardIds) {
+  const { operationId } = await call("browser.select", { cardIds });
+  await waitForOperation(operationId);
+}
 
+async function getTarget() {
+  const selection = await call("browser.getSelection");
+
+  if (selection.open) {
+    const noteIds = new Set(selection.selectedNoteIds);
+    if (noteIds.size === 0) {
+      throw new Error("Browser is open but nothing is selected");
+    }
+    if (noteIds.size > 1) {
+      throw new Error(`Select exactly one note (${noteIds.size} selected)`);
+    }
+    return {
+      noteId: [...noteIds][0],
+      browserCardIds: selection.selectedCardIds,
+    };
+  }
+
+  const reviewer = await call("reviewer.get");
+  if (!reviewer.card) throw new Error("No card is being reviewed");
+  return { noteId: reviewer.card.noteId, browserCardIds: null };
+}
+
+async function setImageField(noteId, filename) {
+  await call("notes.update", {
+    id: noteId,
+    patch: { fields: { Image: `<img src="${filename}">` } },
+  });
+}
+
+async function sendToAnki(imageUrl) {
+  const { noteId, browserCardIds } = await getTarget();
   const data = await fetchAsBase64(imageUrl);
 
   const { operationId } = await call("media.store", {
@@ -83,8 +115,16 @@ async function sendToAnki(imageUrl) {
     throw new Error(`Image was not stored (${stored.status})`);
   }
 
-  await call("notes.update", {
-    id: reviewer.card.noteId,
-    patch: { fields: { Image: `<img src="${stored.filename}">` } },
-  });
+  try {
+    await setImageField(noteId, stored.filename);
+  } catch (e) {
+    if (e.rpc?.data?.type !== "editorConflict" || !browserCardIds) throw e;
+
+    await selectCards([]);
+    try {
+      await setImageField(noteId, stored.filename);
+    } finally {
+      await selectCards(browserCardIds);
+    }
+  }
 }
