@@ -7,28 +7,23 @@ browser.contextMenus.create(
   () => void browser.runtime.lastError,
 );
 
-browser.contextMenus.onClicked.addListener((info, tab) => {
-  if (info.menuItemId === "send-image-to-anki") {
-    const code = "sendToAnki(" + JSON.stringify(info.srcUrl) + ");";
+browser.contextMenus.onClicked.addListener(async (info, tab) => {
+  if (info.menuItemId !== "send-image-to-anki") return;
 
-    browser.tabs
-      .executeScript({
-        code: "typeof sendToAnki === 'function';",
-      })
-      .then((results) => {
-        if (!results || results[0] !== true) {
-          return browser.tabs.executeScript(tab.id, {
-            file: "sendimage.js",
-          });
-        }
-      })
-      .then(() => {
-        return browser.tabs.executeScript(tab.id, {
-          code,
-        });
-      })
-      .catch((error) => {
-        console.error("Failed to send image: " + error);
-      });
+  try {
+    const [loaded] = await browser.tabs.executeScript(tab.id, {
+      code: "typeof sendToAnki === 'function';",
+    });
+
+    if (!loaded) {
+      await browser.tabs.executeScript(tab.id, { file: "defaults.js" });
+      await browser.tabs.executeScript(tab.id, { file: "sendimage.js" });
+    }
+
+    await browser.tabs.executeScript(tab.id, {
+      code: `sendToAnki(${JSON.stringify(info.srcUrl)});`,
+    });
+  } catch (error) {
+    console.error("Failed to send image:", error);
   }
 });

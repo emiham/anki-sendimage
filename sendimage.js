@@ -6,6 +6,10 @@ const FILENAME = "send-image.jpg";
 const POLL_INTERVAL_MS = 200;
 const POLL_TIMEOUT_MS = 10_000;
 
+async function getSettings() {
+  return browser.storage.local.get(DEFAULTS);
+}
+
 async function call(method, params = {}) {
   const id = nextId++;
   const headers = { "Content-Type": "application/json" };
@@ -94,14 +98,16 @@ async function getTarget() {
   return { noteId: reviewer.card.noteId, browserCardIds: null };
 }
 
-async function setImageField(noteId, filename) {
+async function setImageField(noteId, fieldName, filename) {
   await call("notes.update", {
     id: noteId,
-    patch: { fields: { Image: `<img src="${filename}">` } },
+    patch: { fields: { [fieldName]: `<img src="${filename}">` } },
   });
 }
 
 async function sendToAnki(imageUrl) {
+  const { imageFieldName } = await getSettings();
+
   const { noteId, browserCardIds } = await getTarget();
   const data = await fetchAsBase64(imageUrl);
 
@@ -116,13 +122,13 @@ async function sendToAnki(imageUrl) {
   }
 
   try {
-    await setImageField(noteId, stored.filename);
+    await setImageField(noteId, imageFieldName, stored.filename);
   } catch (e) {
     if (e.rpc?.data?.type !== "editorConflict" || !browserCardIds) throw e;
 
     await selectCards([]);
     try {
-      await setImageField(noteId, stored.filename);
+      await setImageField(noteId, imageFieldName, stored.filename);
     } finally {
       await selectCards(browserCardIds);
     }
