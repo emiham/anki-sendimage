@@ -1,2 +1,4 @@
 node_modules
 anki-sendimage.zip
+web-ext-artifacts
+*.xcf
