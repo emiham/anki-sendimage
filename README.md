@@ -10,6 +10,7 @@ know where you want to download the image from. Fortunately the source code is
 small enough that it should be pretty easy to confirm nothing shady is going on.
 
 #### Usage
+
 The intended workflow is this:
 1. Start reviewing your Anki cards.
 2. When you encounter a card that doesn't have an image (or has an image you
@@ -20,6 +21,11 @@ The intended workflow is this:
 You can make step 2 a lot quicker by adding a link to an image search to your
 card.
 
+There is a hardcoded limit at 10 MB right now, as images that are too large
+will hang. I haven't had this be much of a problem yet, and you probably don't
+want images that large in Anki anyway, but if a large image fails you will have
+to copy it manually.
+
 For example:
 ```html
 <a href="https://duckduckgo.com/?hps=1&q={{Expression}}&iax=images&ia=images">
@@ -27,6 +33,7 @@ For example:
   {{^Image}}<img src="_no_image.png"/>{{/Image}}
 </a>
 ```
+
 #### Options
 
 You can change the field name in the addon settings.

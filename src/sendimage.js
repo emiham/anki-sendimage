@@ -5,6 +5,8 @@ let nextId = 1;
 const FILENAME = "send-image.jpg";
 const POLL_INTERVAL_MS = 200;
 const POLL_TIMEOUT_MS = 10_000;
+const FETCH_TIMEOUT_MS = 60_000;
+const MAX_IMAGE_BYTES = 10_000_000;
 
 async function getSettings() {
   return browser.storage.local.get(DEFAULTS);
@@ -56,17 +58,40 @@ async function waitForOperation(operationId) {
 }
 
 async function fetchAsBase64(url) {
-  const response = await fetch(url);
+  const response = await fetch(url, {
+    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+  });
   if (!response.ok) {
     throw new Error(`Image download failed: HTTP ${response.status}`);
   }
+
+  const declared = Number(response.headers.get("content-length"));
+  if (declared > MAX_IMAGE_BYTES) {
+    response.body?.cancel();
+    console.log(
+      `[anki-sendimage] Image too large (${Math.round(declared / 1e6)} MB, limit ${MAX_IMAGE_BYTES / 1e6} MB), skipping`,
+    );
+    return null;
+  }
+
   const blob = await response.blob();
   if (blob.size === 0) throw new Error("Downloaded image is empty");
+
+  // Fallback for servers that send no content-length
+  if (blob.size > MAX_IMAGE_BYTES) {
+    console.log(
+      `[anki-sendimage] Image too large (${Math.round(blob.size / 1e6)} MB, limit ${MAX_IMAGE_BYTES / 1e6} MB), skipping`,
+    );
+    return null;
+  }
 
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onerror = () => reject(reader.error);
-    reader.onload = () => resolve(reader.result.split(",")[1]);
+    reader.onload = () => {
+      const result = reader.result;
+      resolve(result.slice(result.indexOf(",") + 1));
+    };
     reader.readAsDataURL(blob);
   });
 }
@@ -127,6 +152,7 @@ async function sendToAnki(imageUrl) {
   }
 
   const data = await fetchAsBase64(imageUrl);
+  if (data === null) return;
 
   const { operationId } = await call("media.store", {
     filename: FILENAME,
