@@ -5,20 +5,32 @@ it to an [Anki](https://apps.ankiweb.net/) card.
 
 Requires [AnkiConnect](https://ankiweb.net/shared/info/2055492159).
 
+Unfortunately the addon requires permissions for all websites, since it can't
+know where you want to download the image from. Fortunately the source code is
+small enough that it should be pretty easy to confirm nothing shady is going on.
+
+#### Usage
 The intended workflow is this:
 1. Start reviewing your Anki cards.
 2. When you encounter a card that doesn't have an image (or has an image you
    would like to change), open Firefox and search for an image.
-3. Right click your desired image and choose "Send image to Anki".
-4. It will be added to the field named "Image" on the currently displayed card.
-   You can change the field name in the addon settings.
+3. Right click your desired image and choose *Send image to Anki*.
+4. It will be added to the field named *Image* on the currently displayed card.
 
-You can make step 2 a lot quicker by adding a link to an image search to your card.
+You can make step 2 a lot quicker by adding a link to an image search to your
+card.
 
 For example:
 ```html
 <a href="https://duckduckgo.com/?hps=1&q={{Expression}}&iax=images&ia=images">
-  {{#Image}}<div class="crop">{{Image}}</div>{{/Image}}
+  {{#Image}}<div>{{Image}}</div>{{/Image}}
   {{^Image}}<img src="_no_image.png"/>{{/Image}}
 </a>
 ```
+#### Options
+
+You can change the field name in the addon settings.
+
+You can also toggle whether to overwrite existing images (or any other field
+data). Fields with only spaces/newlines/empty divs/empty spans will always be
+overwritten.
