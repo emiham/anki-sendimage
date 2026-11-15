@@ -98,6 +98,15 @@ async function getTarget() {
   return { noteId: reviewer.card.noteId, browserCardIds: null };
 }
 
+function isEmptyField(html) {
+  return (
+    html
+      .replace(/<\/?(div|span|br)\b[^>]*>/gi, "")
+      .replace(/&nbsp;/g, " ")
+      .trim() === ""
+  );
+}
+
 async function setImageField(noteId, fieldName, filename) {
   await call("notes.update", {
     id: noteId,
@@ -106,9 +115,17 @@ async function setImageField(noteId, fieldName, filename) {
 }
 
 async function sendToAnki(imageUrl) {
-  const { imageFieldName } = await getSettings();
-
+  const { imageFieldName, overwriteFilledField } = await getSettings();
   const { noteId, browserCardIds } = await getTarget();
+
+  const note = await call("notes.get", { id: noteId });
+  if (!Object.hasOwn(note.fields, imageFieldName)) {
+    throw new Error(`Note has no field "${imageFieldName}"`);
+  }
+  if (!overwriteFilledField && !isEmptyField(note.fields[imageFieldName])) {
+    throw new Error(`Field "${imageFieldName}" already has content`);
+  }
+
   const data = await fetchAsBase64(imageUrl);
 
   const { operationId } = await call("media.store", {

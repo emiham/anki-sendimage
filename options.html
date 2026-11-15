@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="color-scheme" content="dark light" />
+    <style>
+      label {
+        display: block;
+        margin-bottom: 12px;
+      }
+    </style>
+  </head>
+
+  <body style="padding: 16px">
+    <form>
+      <label>
+        Image field name
+        <input type="text" id="imageFieldName" name="imageFieldName" />
+      </label>
+      <label>
+        <input
+          type="checkbox"
+          id="overwriteFilledField"
+          name="overwriteFilledField"
+        />
+        Overwrite the field if it already has content
+      </label>
+      <button type="submit">Save</button>
+    </form>
+
+    <script src="defaults.js"></script>
+    <script src="options.js"></script>
+  </body>
+</html>
